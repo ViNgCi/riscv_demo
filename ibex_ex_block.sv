@@ -61,11 +61,13 @@ module ibex_ex_block #(
   input  logic [1:0]   lsu_type_ex_i,           // data type: word, half word, byte -> from ID/EX
   input  logic [31:0]  lsu_wdata_ex_i,          // data to write to memory          -> from ID/EX
   input  logic         lsu_sign_ext_ex_i,       // sign extension      
+  input  logic         lsu_req_i,
 
   output  logic         lsu_we_ma_o,             // write enable                     -> from ID/EX
   output  logic [1:0]   lsu_type_ma_o,           // data type: word, half word, byte -> from ID/EX
   output  logic [31:0]  lsu_wdata_ma_o,          // data to write to memory          -> from ID/EX
   output  logic         lsu_sign_ext_ma_o,       // sign extension   
+  output  logic         lsu_req_ma_o,
 
   //to EX_MA_WB pipeline
   input  logic                     en_wb_ex_i,
@@ -166,12 +168,14 @@ module ibex_ex_block #(
           lsu_we_ma_o <= '0;             // write enable                     -> from ID/EX
           lsu_type_ma_o <= '0;           // data type: word, half word, byte -> from ID/EX
           lsu_wdata_ma_o <= '0;          // data to write to memory          -> from ID/EX
-          lsu_sign_ext_ma_o <= '0;       // sign extension             
+          lsu_sign_ext_ma_o <= '0;       // sign extension     
+          lsu_req_ma_o <= '0;        
         end else begin
           lsu_we_ma_o <= lsu_we_ex_i;             // write enable                     -> from ID/EX
           lsu_type_ma_o <= lsu_type_ex_i;           // data type: word, half word, byte -> from ID/EX
           lsu_wdata_ma_o <= lsu_wdata_ex_i;          // data to write to memory          -> from ID/EX
           lsu_sign_ext_ma_o <= lsu_sign_ext_ex_i;       // sign extension   
+          lsu_req_ma_o <= lsu_req_i;
         end
       end
     end else begin : id_ex_lsu
@@ -180,6 +184,7 @@ module ibex_ex_block #(
           lsu_type_ma_o <= lsu_type_ex_i;           // data type: word, half word, byte -> from ID/EX
           lsu_wdata_ma_o <= lsu_wdata_ex_i;          // data to write to memory          -> from ID/EX
           lsu_sign_ext_ma_o <= lsu_sign_ext_ex_i;       // sign extension   
+          lsu_req_ma_o <= lsu_req_i;
       end
     end
 

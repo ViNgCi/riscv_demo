@@ -183,7 +183,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [31:0] pc_id;                          // Program counter in ID stage
   logic [31:0] pc_wb;                          // Program counter in WB stage
   logic [33:0] imd_val_d_ex[2];                // Intermediate register for multicycle Ops
-  logic [33:0] imd_val_q_ex[2];                // Intermediate register for multicycle Ops
+ // logic [33:0] imd_val_q_ex[2];                // Intermediate register for multicycle Ops
   logic [33:0] imd_val_q_ex[2];                // Intermediate register for multicycle Ops
   logic [1:0]  imd_val_we_ex;
 
@@ -696,6 +696,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [1:0]   lsu_type_ma;           // data type: word, half word, byte -> from ID/EX
   logic [31:0]  lsu_wdata_ma;          // data to write to memory          -> from ID/EX
   logic         lsu_sign_ext_ma;       // sign exte
+  logic         lsu_req_ma;
 
   logic                     en_wb_ma;
   ibex_pkg::wb_instr_type_e instr_type_wb_ma;
@@ -705,7 +706,7 @@ module ibex_core import ibex_pkg::*; #(
   logic [4:0]               rf_waddr_id_ma;
   logic [31:0]              rf_wdata_id_ma;
   logic                     rf_we_id_ma;
-  logic                     dummy_instr_id_m;
+  logic                     dummy_instr_id_ma;
 
 
   ibex_ex_block #(
@@ -758,11 +759,13 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_type_ex_i(lsu_type),           // data type: word, half word, byte -> from ID/EX
     .lsu_wdata_ex_i(lsu_wdata),          // data to write to memory          -> from ID/EX
     .lsu_sign_ext_ex_i(lsu_sign_ext),       // sign extension      
+    .lsu_req_i        (lsu_req),
 
     .lsu_we_ma_o(lsu_we_ma),             // write enable                     -> from ID/EX
     .lsu_type_ma_o(lsu_type_ma),           // data type: word, half word, byte -> from ID/EX
     .lsu_wdata_ma_o(lsu_wdata_ma),          // data to write to memory          -> from ID/EX
     .lsu_sign_ext_ma_o(lsu_sign_ext_ma),       // sign extension   
+    .lsu_req_o        (lsu_req_ma),
 
     //to EX_MA_WB pipeline
     .en_wb_ex_i(en_wb),
@@ -826,14 +829,14 @@ module ibex_core import ibex_pkg::*; #(
     .data_rdata_i     (data_rdata_i), //from ram
 
     // signals to/from ID/EX stage
-    .lsu_we_i      (lsu_we), //from id
-    .lsu_type_i    (lsu_type), //from id
-    .lsu_wdata_i   (lsu_wdata), //from id
-    .lsu_sign_ext_i(lsu_sign_ext), //from id
+    .lsu_we_i      (lsu_we_ma), //from id
+    .lsu_type_i    (lsu_type_ma), //from id
+    .lsu_wdata_i   (lsu_wdata_ma), //from id
+    .lsu_sign_ext_i(lsu_sign_ext_ma), //from id
 
     .lsu_rdata_o      (rf_wdata_lsu), //to wb
     .lsu_rdata_valid_o(rf_we_lsu), //to wb
-    .lsu_req_i        (lsu_req), //from id
+    .lsu_req_i        (lsu_req_ma), //from id
     .lsu_req_done_o   (lsu_req_done), //to id
 
     .adder_result_ex_i(alu_adder_result_ex), //from ex
@@ -934,44 +937,44 @@ module ibex_core import ibex_pkg::*; #(
   assign rf_we_wb_o       = rf_we_wb;
   assign rf_raddr_b_o     = rf_raddr_b;
 
-//   if (RegFileECC) begin : gen_regfile_ecc
+  if (RegFileECC) begin : gen_regfile_ecc
 
-//     // SEC_CM: DATA_REG_SW.INTEGRITY
-//     logic [1:0] rf_ecc_err_a, rf_ecc_err_b;
-//     logic       rf_ecc_err_a_id, rf_ecc_err_b_id;
+    // SEC_CM: DATA_REG_SW.INTEGRITY
+    logic [1:0] rf_ecc_err_a, rf_ecc_err_b;
+    logic       rf_ecc_err_a_id, rf_ecc_err_b_id;
 
-//     // ECC checkbit generation for regiter file wdata
-//     prim_secded_inv_39_32_enc regfile_ecc_enc (
-//       .data_i(rf_wdata_wb),
-//       .data_o(rf_wdata_wb_ecc_o)
-//     );
+    // ECC checkbit generation for regiter file wdata
+    prim_secded_inv_39_32_enc regfile_ecc_enc (
+      .data_i(rf_wdata_wb),
+      .data_o(rf_wdata_wb_ecc_o)
+    );
 
-//     // ECC checking on register file rdata
-//     prim_secded_inv_39_32_dec regfile_ecc_dec_a (
-//       .data_i    (rf_rdata_a_ecc_i),
-//       .data_o    (),
-//       .syndrome_o(),
-//       .err_o     (rf_ecc_err_a)
-//     );
-//     prim_secded_inv_39_32_dec regfile_ecc_dec_b (
-//       .data_i    (rf_rdata_b_ecc_i),
-//       .data_o    (),
-//       .syndrome_o(),
-//       .err_o     (rf_ecc_err_b)
-//     );
+    // ECC checking on register file rdata
+    prim_secded_inv_39_32_dec regfile_ecc_dec_a (
+      .data_i    (rf_rdata_a_ecc_i),
+      .data_o    (),
+      .syndrome_o(),
+      .err_o     (rf_ecc_err_a)
+    );
+    prim_secded_inv_39_32_dec regfile_ecc_dec_b (
+      .data_i    (rf_rdata_b_ecc_i),
+      .data_o    (),
+      .syndrome_o(),
+      .err_o     (rf_ecc_err_b)
+    );
 
-//     // Assign read outputs - no error correction, just trigger an alert
-//     assign rf_rdata_a = rf_rdata_a_ecc_i[31:0];
-//     assign rf_rdata_b = rf_rdata_b_ecc_i[31:0];
+    // Assign read outputs - no error correction, just trigger an alert
+    assign rf_rdata_a = rf_rdata_a_ecc_i[31:0];
+    assign rf_rdata_b = rf_rdata_b_ecc_i[31:0];
 
-//     // Calculate errors - qualify with WB forwarding to avoid xprop into the alert signal
-//     assign rf_ecc_err_a_id = |rf_ecc_err_a & rf_ren_a & ~rf_rd_a_wb_match;
-//     assign rf_ecc_err_b_id = |rf_ecc_err_b & rf_ren_b & ~rf_rd_b_wb_match;
+    // Calculate errors - qualify with WB forwarding to avoid xprop into the alert signal
+    assign rf_ecc_err_a_id = |rf_ecc_err_a & rf_ren_a & ~rf_rd_a_wb_match;
+    assign rf_ecc_err_b_id = |rf_ecc_err_b & rf_ren_b & ~rf_rd_b_wb_match;
 
-//     // Combined error
-//     assign rf_ecc_err_comb = instr_valid_id & (rf_ecc_err_a_id | rf_ecc_err_b_id);
+    // Combined error
+    assign rf_ecc_err_comb = instr_valid_id & (rf_ecc_err_a_id | rf_ecc_err_b_id);
 
-//   end else begin : gen_no_regfile_ecc
+  end else begin : gen_no_regfile_ecc
     logic unused_rf_ren_a, unused_rf_ren_b;
     logic unused_rf_rd_a_wb_match, unused_rf_rd_b_wb_match;
 
@@ -983,7 +986,7 @@ module ibex_core import ibex_pkg::*; #(
     assign rf_rdata_a              = rf_rdata_a_ecc_i;
     assign rf_rdata_b              = rf_rdata_b_ecc_i;
     assign rf_ecc_err_comb         = 1'b0;
-//   end
+  end
 
   ///////////////////////
   // Crash dump output //
