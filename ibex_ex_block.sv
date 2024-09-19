@@ -368,7 +368,7 @@ module ibex_ex_block #(
       .operator_i        (multdiv_operator_q),
       .signed_mode_i     (multdiv_signed_mode_q),
       .op_a_i            (multdiv_operand_a_q),
-      .op_b_q            (multdiv_operand_b_q),
+      .op_b_i            (multdiv_operand_b_q),
       .alu_adder_ext_i   (alu_adder_result_ext),
       .alu_adder_i       (alu_adder_result_ex_o),
       .equal_to_zero_i   (alu_is_equal_result),
