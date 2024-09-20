@@ -765,7 +765,7 @@ module ibex_core import ibex_pkg::*; #(
     .lsu_type_ma_o(lsu_type_ma),           // data type: word, half word, byte -> from ID/EX
     .lsu_wdata_ma_o(lsu_wdata_ma),          // data to write to memory          -> from ID/EX
     .lsu_sign_ext_ma_o(lsu_sign_ext_ma),       // sign extension   
-    .lsu_req_o        (lsu_req_ma),
+    .lsu_req_ma_o        (lsu_req_ma),
 
     //to EX_MA_WB pipeline
     .en_wb_ex_i(en_wb),
